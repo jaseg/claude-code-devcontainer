@@ -1,7 +1,7 @@
 # Claude Code Devcontainer
 # Based on Microsoft devcontainer image for better devcontainer integration
-FROM ghcr.io/astral-sh/uv:0.10@sha256:10902f58a1606787602f303954cea099626a4adb02acbac4c69920fe9d278f82 AS uv
-FROM mcr.microsoft.com/devcontainers/base:ubuntu24.04@sha256:4bcb1b466771b1ba1ea110e2a27daea2f6093f9527fb75ee59703ec89b5561cb
+FROM ghcr.io/astral-sh/uv:0.13.5@sha256:32a7bb39b496babbd997b0a39a4d66c126bdaf5661b302bf6f06abda8deca6ff AS uv
+FROM mcr.microsoft.com/devcontainers/base:ubuntu24.04@sha256:21e9e3275736cb3bc33a2904b279a2ab292c51fedd53c2963463627d4586c3e6
 
 ARG TZ
 ENV TZ="$TZ"
@@ -10,6 +10,8 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install additional system packages (base image already includes git, curl, sudo, etc.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
+  # Upgrade beyond the base image's copy to drop the compromised eMudhra/emSign roots
+  ca-certificates \
   # Sandboxing support for Claude Code
   bubblewrap \
   socat \
@@ -34,7 +36,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install git-delta
 # renovate: datasource=github-releases depName=dandavison/delta
-ARG GIT_DELTA_VERSION=0.18.2
+ARG GIT_DELTA_VERSION=0.20.1
 RUN ARCH=$(dpkg --print-architecture) && \
   curl -fsSL "https://github.com/dandavison/delta/releases/download/${GIT_DELTA_VERSION}/git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" -o /tmp/git-delta.deb && \
   dpkg -i /tmp/git-delta.deb && \
@@ -45,7 +47,7 @@ COPY --from=uv /uv /usr/local/bin/uv
 
 # Install fzf from GitHub releases (newer than apt, includes built-in shell integration)
 # renovate: datasource=github-releases depName=junegunn/fzf
-ARG FZF_VERSION=0.70.0
+ARG FZF_VERSION=0.74.5
 RUN ARCH=$(dpkg --print-architecture) && \
   case "${ARCH}" in \
     amd64) FZF_ARCH="linux_amd64" ;; \
